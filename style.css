@@ -1,0 +1,160 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f1f5f9; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    color: #334155; 
+}
+
+.card {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08); 
+    position: relative;
+    overflow: hidden; /* Penting agar header biru tidak keluar dari sudut membulat */
+}
+
+/* Latar belakang biru di bagian atas */
+.card-header {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    height: 120px;
+    width: 100%;
+}
+
+.card-body {
+    padding: 0 30px 35px;
+    text-align: center;
+    margin-top: -60px; /* Menarik konten ke atas agar foto menumpuk */
+    position: relative;
+    z-index: 2;
+}
+
+.foto-profil {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #ffffff; /* Border putih solid */
+    margin-bottom: 15px;
+    background-color: #f8fafc;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.nama {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 5px;
+    letter-spacing: -0.5px;
+}
+
+.jabatan {
+    font-size: 14px;
+    color: #3b82f6;
+    font-weight: 700;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Desain kotak detail yang lebih bersih */
+.detail-box {
+    background-color: #ffffff;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 18px 20px;
+    border-bottom: 1px solid #f1f5f9; /* Garis pemisah yang sangat halus */
+    text-align: left;
+}
+
+.detail-icon {
+    color: #3b82f6;
+    font-size: 18px;
+    width: 35px;
+    padding-top: 2px; /* Menyejajarkan ikon dengan teks */
+}
+
+.detail-content {
+    flex: 1;
+}
+
+.detail-label {
+    font-weight: 700;
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 15px;
+    color: #334155;
+    font-weight: 500;
+}
+
+/* Memperbaiki jarak teks dan menggunakan fitur tipografi hyphens */
+.deskripsi-tugas {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #475569;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    word-spacing: -0.5px;
+    display: block;
+}
+
+/* Tombol WA Premium */
+.btn-wa {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    background-color: #25D366; /* Warna brand WhatsApp */
+    color: white;
+    text-decoration: none;
+    padding: 16px 20px;
+    border-radius: 12px; /* Sudut sedikit melengkung, tidak oval penuh */
+    font-weight: 600;
+    font-size: 16px;
+    width: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 15px rgba(37, 211, 102, 0.25);
+}
+
+.btn-wa:hover {
+    background-color: #128C7E;
+    box-shadow: 0 10px 20px rgba(37, 211, 102, 0.35);
+    transform: translateY(-2px);
+}
+
+/* Layout State Loading/Error */
+#content-profil, #error-pesan {
+    display: none;
+}
+
+#loading, #error-pesan {
+    padding: 60px 20px;
+    text-align: center;
+    color: #64748b;
+}

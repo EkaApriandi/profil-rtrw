@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Digital RT/RW</title>
+    <!-- Menghubungkan ke CSS eksternal -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Memanggil library Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Memanggil library FontAwesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="card">
+        <!-- Indikator memuat data -->
+        <div id="loading">
+            <i class="fas fa-circle-notch fa-spin" style="color: #3b82f6; font-size: 24px; margin-bottom: 10px;"></i>
+            <p>Memuat data pengurus...</p>
+        </div>
+
+        <!-- Pesan error -->
+        <div id="error-pesan">
+            <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 30px; margin-bottom: 15px;"></i>
+            <h3 style="color: #ef4444; margin-bottom: 8px;">Data Tidak Ditemukan</h3>
+            <p style="font-size: 14px; color: #64748b;">QR Code tidak valid atau pengurus belum terdaftar.</p>
+        </div>
+
+        <!-- Konten Utama Profil -->
+        <div id="content-profil">
+            <!-- Latar belakang biru di atas kartu -->
+            <div class="card-header"></div>
+            
+            <div class="card-body">
+                <img src="" alt="Foto Pengurus" id="foto" class="foto-profil">
+                <h1 class="nama" id="nama">-</h1>
+                <p class="jabatan" id="jabatan">-</p>
+
+                <div class="detail-box">
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="far fa-calendar-alt"></i></div>
+                        <div class="detail-content">
+                            <span class="detail-label">Masa Jabatan</span>
+                            <span class="detail-value" id="masa_jabatan">-</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-mobile-alt"></i></div>
+                        <div class="detail-content">
+                            <span class="detail-label">Nomor HP</span>
+                            <span class="detail-value" id="no_hp">-</span>
+                        </div>
+                    </div>
+                    <div class="detail-item" style="border-bottom: none;">
+                        <div class="detail-icon"><i class="fas fa-clipboard-list"></i></div>
+                        <div class="detail-content">
+                            <span class="detail-label">Deskripsi Tugas</span>
+                            <span id="deskripsi_tugas" class="deskripsi-tugas">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="#" id="link_wa" class="btn-wa" target="_blank">
+                    <i class="fab fa-whatsapp" style="font-size: 20px;"></i> Hubungi via WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menghubungkan ke JavaScript eksternal -->
+    <script src="script.js" defer></script>
+</body>
+</html>
