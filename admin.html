@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Profil RT/RW</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: #f1f5f9; margin: 0; padding: 20px; color: #334155; }
+        
+        /* Container */
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* Form & Inputs */
+        input, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; }
+        button { background-color: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #2563eb; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-small { width: auto; padding: 8px 12px; font-size: 12px; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f8fafc; font-weight: 600; }
+        
+        /* Modal Edit */
+        #edit-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 10; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; }
+        
+        /* Layouts */
+        #dashboard-section { display: none; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- SEGMEN LOGIN -->
+    <div id="login-section" class="card" style="max-width: 400px; margin: 100px auto;">
+        <h2 style="text-align: center; margin-bottom: 20px;">Login Admin</h2>
+        <div id="login-error" style="color: red; font-size: 12px; margin-bottom: 10px; display: none;"></div>
+        <input type="email" id="email" placeholder="Email Admin" required>
+        <input type="password" id="password" placeholder="Passphrase" required>
+        <button onclick="login()">Masuk</button>
+    </div>
+
+    <!-- SEGMEN DASHBOARD -->
+    <div id="dashboard-section">
+        <div class="card header-flex">
+            <h2>Panel Pengelolaan Data RT/RW</h2>
+            <button class="btn-danger btn-small" onclick="logout()">Keluar</button>
+        </div>
+        
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nama</th>
+                        <th>Jabatan</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Data dimuat dari JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDIT DATA -->
+<div id="edit-modal">
+    <div class="modal-content">
+        <h3>Edit Data Pengurus</h3>
+        <input type="hidden" id="edit-id">
+        <label>Nama</label>
+        <input type="text" id="edit-nama">
+        <label>Jabatan</label>
+        <input type="text" id="edit-jabatan">
+        <label>URL Foto</label>
+        <input type="text" id="edit-foto">
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="simpanData()">Simpan</button>
+            <button class="btn-danger" onclick="tutupModal()">Batal</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Konfigurasi Supabase (Menggunakan data dari script.js Anda)
+    const SUPABASE_URL = 'https://zpskuqsmnsrolbnvmrvr.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpwc2t1cXNtbnNyb2xibnZtcnZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNDg4MTAsImV4cCI6MjEwMDcyNDgxMH0.e6ic19bbKP0BorQEiIzjKe3xtRfvXM0rRqEdY25zKcg';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Cek Status Login saat halaman dimuat
+    window.onload = async () => {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            tampilkanDashboard();
+        }
+    };
+
+    // Fungsi Login
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('login-error');
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        
+        if (error) {
+            errorDiv.innerText = "Login gagal. Periksa email dan passphrase.";
+            errorDiv.style.display = 'block';
+        } else {
+            tampilkanDashboard();
+        }
+    }
+
+    // Fungsi Logout
+    async function logout() {
+        await supabaseClient.auth.signOut();
+        document.getElementById('dashboard-section').style.display = 'none';
+        document.getElementById('login-section').style.display = 'block';
+    }
+
+    // Fungsi Menampilkan Dashboard & Memuat Data
+    async function tampilkanDashboard() {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('dashboard-section').style.display = 'block';
+        muatDataPengurus();
+    }
+
+    // Fungsi Ambil Data dari Tabel
+    async function muatDataPengurus() {
+        const { data, error } = await supabaseClient
+            .from('pengurus')
+            .select('*')
+            .order('id', { ascending: true });
+
+        if (error) {
+            alert("Gagal memuat data!");
+            return;
+        }
+
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = '';
+        
+        data.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${p.id}</td>
+                <td>${p.nama || '-'}</td>
+                <td>${p.jabatan || '-'}</td>
+                <td>
+                    <button class="btn-small" onclick="bukaModal('${p.id}', '${p.nama || ''}', '${p.jabatan || ''}', '${p.foto_url || ''}')">Edit</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Fungsi Buka Modal Edit
+    function bukaModal(id, nama, jabatan, foto) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-nama').value = nama;
+        document.getElementById('edit-jabatan').value = jabatan;
+        document.getElementById('edit-foto').value = foto;
+        document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    // Fungsi Tutup Modal Edit
+    function tutupModal() {
+        document.getElementById('edit-modal').style.display = 'none';
+    }
+
+    // Fungsi Update Data ke Supabase (Memicu RLS Update)
+    async function simpanData() {
+        const id = document.getElementById('edit-id').value;
+        const nama = document.getElementById('edit-nama').value;
+        const jabatan = document.getElementById('edit-jabatan').value;
+        const foto_url = document.getElementById('edit-foto').value;
+
+        const { error } = await supabaseClient
+            .from('pengurus')
+            .update({ nama: nama, jabatan: jabatan, foto_url: foto_url })
+            .eq('id', id);
+
+        if (error) {
+            alert("Gagal menyimpan data! Pastikan Anda sudah mengatur RLS Update.");
+            console.error(error);
+        } else {
+            alert("Data berhasil diperbarui!");
+            tutupModal();
+            muatDataPengurus(); // Muat ulang tabel
+        }
+    }
+</script>
+</body>
+</html>
