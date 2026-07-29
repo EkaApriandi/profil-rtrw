@@ -14,6 +14,7 @@
         
         input, textarea, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-family: inherit; }
         textarea { resize: vertical; }
+        input[readonly] { background-color: #e2e8f0; cursor: not-allowed; } /* Style untuk input ID saat mode Edit (dikunci) */
         
         button { background-color: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
         button:hover { background-color: #2563eb; }
@@ -38,7 +39,6 @@
 <body>
 
 <div class="container">
-    <!-- SEGMEN LOGIN -->
     <div id="login-section" class="card" style="max-width: 400px; margin: 100px auto;">
         <h2 style="text-align: center; margin-bottom: 20px;">Login Admin</h2>
         <div id="login-error" style="color: red; font-size: 12px; margin-bottom: 10px; display: none;"></div>
@@ -47,11 +47,11 @@
         <button onclick="login()">Masuk</button>
     </div>
 
-    <!-- SEGMEN DASHBOARD -->
     <div id="dashboard-section">
         <div class="card header-flex">
             <h2>Panel Pengelolaan Data RT/RW</h2>
             <div class="action-buttons">
+                <!-- Tombol Tambah Data -->
                 <button class="btn-success btn-small" onclick="bukaModalTambah()">+ Tambah Data</button>
                 <button class="btn-danger btn-small" onclick="logout()">Keluar</button>
             </div>
@@ -68,7 +68,6 @@
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <!-- Data dimuat dari JS -->
                 </tbody>
             </table>
         </div>
@@ -79,16 +78,19 @@
 <div id="edit-modal">
     <div class="modal-content">
         <h3 id="modal-title">Form Data Pengurus</h3>
-        <input type="hidden" id="edit-id">
+        
+        <!-- KOLOM ID DITAMBAHKAN DI SINI -->
+        <label>ID Pengurus (Contoh: RT1-RW2)</label>
+        <input type="text" id="edit-id" placeholder="Ketik ID unik untuk data ini">
         
         <label>Nama</label>
-        <input type="text" id="edit-nama">
+        <input type="text" id="edit-nama" placeholder="Nama Lengkap">
         
         <label>Jabatan</label>
-        <input type="text" id="edit-jabatan">
+        <input type="text" id="edit-jabatan" placeholder="Contoh: Ketua RT 1 / RW 2">
         
         <label>Masa Jabatan</label>
-        <input type="text" id="edit-masa" placeholder="Contoh: 2026-2030">
+        <input type="text" id="edit-masa" placeholder="Contoh: April 2026 - April 2031">
         
         <label>Nomor HP / WhatsApp</label>
         <input type="text" id="edit-nohp" placeholder="Contoh: 08123456789">
@@ -96,8 +98,8 @@
         <label>Deskripsi Tugas</label>
         <textarea id="edit-deskripsi" rows="3" placeholder="Tuliskan detail tugas di sini..."></textarea>
         
-        <label>URL Foto</label>
-        <input type="text" id="edit-foto">
+        <label>URL Foto (Dari Supabase Storage)</label>
+        <input type="text" id="edit-foto" placeholder="Link gambar publik">
         
         <div style="display: flex; gap: 10px;">
             <button id="btn-simpan" onclick="simpanData()">Simpan</button>
@@ -107,11 +109,13 @@
 </div>
 
 <script>
+    // Konfigurasi Supabase
     const SUPABASE_URL = 'https://zpskuqsmnsrolbnvmrvr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpwc2t1cXNtbnNyb2xibnZtcnZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNDg4MTAsImV4cCI6MjEwMDcyNDgxMH0.e6ic19bbKP0BorQEiIzjKe3xtRfvXM0rRqEdY25zKcg';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let daftarPengurus = [];
+    let modeForm = 'edit'; // Penanda mode: 'tambah' atau 'edit'
 
     window.onload = async () => {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -125,7 +129,7 @@
 
         const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
-            errorDiv.innerText = "Login gagal. Periksa email dan passphrase.";
+            errorDiv.innerText = "Login gagal. Periksa kembali kredensial Anda.";
             errorDiv.style.display = 'block';
         } else {
             tampilkanDashboard();
@@ -151,7 +155,7 @@
             .order('id', { ascending: true });
 
         if (error) {
-            alert("Gagal memuat data!");
+            alert("Gagal memuat data dari Supabase!");
             return;
         }
 
@@ -162,7 +166,7 @@
         data.forEach(p => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${p.id}</td>
+                <td><strong>${p.id || 'Tanpa ID'}</strong></td>
                 <td>${p.nama || '-'}</td>
                 <td>${p.jabatan || '-'}</td>
                 <td>
@@ -173,10 +177,16 @@
         });
     }
 
-    // Fungsi Buka Modal untuk TAMBAH DATA BARU
+    // Fungsi saat tombol + Tambah Data diklik
     function bukaModalTambah() {
+        modeForm = 'tambah';
         document.getElementById('modal-title').innerText = 'Tambah Data Pengurus Baru';
-        document.getElementById('edit-id').value = ''; // Dikosongkan sebagai penanda ini data baru
+        
+        // Buka kunci input ID dan kosongkan form
+        const inputId = document.getElementById('edit-id');
+        inputId.value = '';
+        inputId.readOnly = false; // Memungkinkan ID diketik
+        
         document.getElementById('edit-nama').value = '';
         document.getElementById('edit-jabatan').value = '';
         document.getElementById('edit-masa').value = '';
@@ -187,13 +197,18 @@
         document.getElementById('edit-modal').style.display = 'flex';
     }
 
-    // Fungsi Buka Modal untuk EDIT DATA
+    // Fungsi saat tombol Edit diklik
     function bukaModalEdit(id) {
+        modeForm = 'edit';
         document.getElementById('modal-title').innerText = 'Edit Data Pengurus';
         const p = daftarPengurus.find(item => item.id == id);
         if (!p) return;
 
-        document.getElementById('edit-id').value = p.id;
+        // Kunci input ID agar tidak bisa diubah (karena sebagai Primary Key)
+        const inputId = document.getElementById('edit-id');
+        inputId.value = p.id || '';
+        inputId.readOnly = true;
+
         document.getElementById('edit-nama').value = p.nama || '';
         document.getElementById('edit-jabatan').value = p.jabatan || '';
         document.getElementById('edit-masa').value = p.masa_jabatan || '';
@@ -208,13 +223,22 @@
         document.getElementById('edit-modal').style.display = 'none';
     }
 
-    // Fungsi Gabungan: Insert (jika ID kosong) atau Update (jika ID ada isinya)
+    // Fungsi untuk menyimpan data (baik Tambah maupun Edit)
     async function simpanData() {
+        const idInput = document.getElementById('edit-id').value.trim();
+        
+        // Validasi: Pastikan ID tidak kosong
+        if (!idInput) {
+            alert("ID Pengurus WAJIB diisi! (Misal: RT1-RW2)");
+            document.getElementById('edit-id').focus();
+            return;
+        }
+
         const btnSimpan = document.getElementById('btn-simpan');
         btnSimpan.innerText = "Menyimpan...";
+        btnSimpan.disabled = true;
         
-        const id = document.getElementById('edit-id').value;
-        const dataBaru = {
+        const dataPayload = {
             nama: document.getElementById('edit-nama').value,
             jabatan: document.getElementById('edit-jabatan').value,
             masa_jabatan: document.getElementById('edit-masa').value,
@@ -225,17 +249,17 @@
 
         let hasil;
         
-        // Logika penentu: Apakah ini Insert atau Update?
-        if (id === "") {
-            // Jika ID kosong, berarti tambah data baru (INSERT)
-            hasil = await supabaseClient.from('pengurus').insert([dataBaru]);
+        if (modeForm === 'tambah') {
+            // Sertakan ID untuk data baru
+            dataPayload.id = idInput; 
+            hasil = await supabaseClient.from('pengurus').insert([dataPayload]);
         } else {
-            // Jika ID ada isinya, berarti perbarui data (UPDATE)
-            hasil = await supabaseClient.from('pengurus').update(dataBaru).eq('id', id);
+            // Update data lama berdasarkan ID
+            hasil = await supabaseClient.from('pengurus').update(dataPayload).eq('id', idInput);
         }
 
         if (hasil.error) {
-            alert("Gagal menyimpan data! Cek apakah aturan RLS sudah benar.");
+            alert("Gagal menyimpan data! Pastikan ID yang dimasukkan unik (belum pernah dipakai) dan tabel Anda sudah mengatur 'id' sebagai Primary Key.");
             console.error(hasil.error);
         } else {
             alert("Data berhasil disimpan!");
@@ -244,6 +268,7 @@
         }
         
         btnSimpan.innerText = "Simpan";
+        btnSimpan.disabled = false;
     }
 </script>
 </body>
