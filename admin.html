@@ -14,7 +14,8 @@
         .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
         /* Form & Inputs */
-        input, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; }
+        input, textarea, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-family: inherit; }
+        textarea { resize: vertical; }
         button { background-color: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
         button:hover { background-color: #2563eb; }
         .btn-danger { background-color: #ef4444; }
@@ -27,8 +28,10 @@
         th { background-color: #f8fafc; font-weight: 600; }
         
         /* Modal Edit */
-        #edit-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 10; }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; }
+        #edit-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 10; padding: 20px; }
+        
+        /* Penambahan max-height agar bisa di-scroll jika layar kecil */
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
         
         /* Layouts */
         #dashboard-section { display: none; }
@@ -54,7 +57,7 @@
             <button class="btn-danger btn-small" onclick="logout()">Keluar</button>
         </div>
         
-        <div class="card">
+        <div class="card" style="overflow-x: auto;">
             <table>
                 <thead>
                     <tr>
@@ -77,10 +80,22 @@
     <div class="modal-content">
         <h3>Edit Data Pengurus</h3>
         <input type="hidden" id="edit-id">
+        
         <label>Nama</label>
         <input type="text" id="edit-nama">
+        
         <label>Jabatan</label>
         <input type="text" id="edit-jabatan">
+        
+        <label>Masa Jabatan</label>
+        <input type="text" id="edit-masa" placeholder="Contoh: 2026-2030">
+        
+        <label>Nomor HP / WhatsApp</label>
+        <input type="text" id="edit-nohp" placeholder="Contoh: 08123456789">
+        
+        <label>Deskripsi Tugas</label>
+        <textarea id="edit-deskripsi" rows="3" placeholder="Tuliskan detail tugas di sini..."></textarea>
+        
         <label>URL Foto</label>
         <input type="text" id="edit-foto">
         
@@ -92,10 +107,13 @@
 </div>
 
 <script>
-    // Konfigurasi Supabase (Menggunakan data dari script.js Anda)
+    // Konfigurasi Supabase
     const SUPABASE_URL = 'https://zpskuqsmnsrolbnvmrvr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpwc2t1cXNtbnNyb2xibnZtcnZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNDg4MTAsImV4cCI6MjEwMDcyNDgxMH0.e6ic19bbKP0BorQEiIzjKe3xtRfvXM0rRqEdY25zKcg';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Menyimpan data secara global agar aman saat dipanggil ke modal (mencegah error tanda kutip di teks deskripsi)
+    let daftarPengurus = [];
 
     // Cek Status Login saat halaman dimuat
     window.onload = async () => {
@@ -128,7 +146,7 @@
         document.getElementById('login-section').style.display = 'block';
     }
 
-    // Fungsi Menampilkan Dashboard & Memuat Data
+    // Fungsi Menampilkan Dashboard
     async function tampilkanDashboard() {
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('dashboard-section').style.display = 'block';
@@ -143,10 +161,11 @@
             .order('id', { ascending: true });
 
         if (error) {
-            alert("Gagal memuat data!");
+            alert("Gagal memuat data! Pastikan aturan RLS SELECT untuk 'authenticated' sudah aktif.");
             return;
         }
 
+        daftarPengurus = data; // Simpan ke variabel global
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
         
@@ -157,19 +176,26 @@
                 <td>${p.nama || '-'}</td>
                 <td>${p.jabatan || '-'}</td>
                 <td>
-                    <button class="btn-small" onclick="bukaModal('${p.id}', '${p.nama || ''}', '${p.jabatan || ''}', '${p.foto_url || ''}')">Edit</button>
+                    <button class="btn-small" onclick="bukaModal('${p.id}')">Edit</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // Fungsi Buka Modal Edit
-    function bukaModal(id, nama, jabatan, foto) {
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-nama').value = nama;
-        document.getElementById('edit-jabatan').value = jabatan;
-        document.getElementById('edit-foto').value = foto;
+    // Fungsi Buka Modal Edit dengan menarik data dari variabel global
+    function bukaModal(id) {
+        const p = daftarPengurus.find(item => item.id === id);
+        if (!p) return;
+
+        document.getElementById('edit-id').value = p.id;
+        document.getElementById('edit-nama').value = p.nama || '';
+        document.getElementById('edit-jabatan').value = p.jabatan || '';
+        document.getElementById('edit-masa').value = p.masa_jabatan || '';
+        document.getElementById('edit-nohp').value = p.no_hp || '';
+        document.getElementById('edit-deskripsi').value = p.deskripsi_tugas || '';
+        document.getElementById('edit-foto').value = p.foto_url || '';
+        
         document.getElementById('edit-modal').style.display = 'flex';
     }
 
@@ -178,26 +204,36 @@
         document.getElementById('edit-modal').style.display = 'none';
     }
 
-    // Fungsi Update Data ke Supabase (Memicu RLS Update)
+    // Fungsi Update Data ke Supabase
     async function simpanData() {
+        const btnSimpan = document.querySelector('.modal-content button');
+        btnSimpan.innerText = "Menyimpan..."; // Indikator loading
+        
         const id = document.getElementById('edit-id').value;
-        const nama = document.getElementById('edit-nama').value;
-        const jabatan = document.getElementById('edit-jabatan').value;
-        const foto_url = document.getElementById('edit-foto').value;
+        const dataBaru = {
+            nama: document.getElementById('edit-nama').value,
+            jabatan: document.getElementById('edit-jabatan').value,
+            masa_jabatan: document.getElementById('edit-masa').value,
+            no_hp: document.getElementById('edit-nohp').value,
+            deskripsi_tugas: document.getElementById('edit-deskripsi').value,
+            foto_url: document.getElementById('edit-foto').value
+        };
 
         const { error } = await supabaseClient
             .from('pengurus')
-            .update({ nama: nama, jabatan: jabatan, foto_url: foto_url })
+            .update(dataBaru)
             .eq('id', id);
 
         if (error) {
-            alert("Gagal menyimpan data! Pastikan Anda sudah mengatur RLS Update.");
+            alert("Gagal menyimpan data!");
             console.error(error);
         } else {
             alert("Data berhasil diperbarui!");
             tutupModal();
-            muatDataPengurus(); // Muat ulang tabel
+            muatDataPengurus(); // Muat ulang tabel agar perubahan langsung terlihat
         }
+        
+        btnSimpan.innerText = "Simpan";
     }
 </script>
 </body>
