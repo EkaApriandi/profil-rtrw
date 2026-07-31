@@ -303,6 +303,10 @@ function downloadQR() {
         document.body.removeChild(link);
         
         showToast("QR Code berhasil diunduh!", "success");
+        
+        // --- Pop-up otomatis tertutup setelah unduh ---
+        tutupModalQR();
+        
     } else {
         showToast("Tunggu sebentar, gambar QR belum selesai dibuat.", "error");
     }
