@@ -56,10 +56,15 @@ async function ambilDataPengurus() {
                 // Bersihkan karakter selain angka (seperti spasi, strip, atau tanda +)
                 let noHpWa = String(data.no_hp).replace(/\D/g, ''); 
                 
-                // Jika depannya 0, ganti jadi 62
+                // LOGIKA PERBAIKAN FORMAT NOMOR WA
                 if (noHpWa.startsWith('0')) {
+                    // Jika depannya 0, ganti jadi 62
                     noHpWa = '62' + noHpWa.substring(1);
+                } else if (noHpWa.startsWith('8')) {
+                    // Jika depannya 8 (seperti 877...), tambahkan 62 di depannya
+                    noHpWa = '62' + noHpWa;
                 }
+                // Jika sudah diawali 62, maka kode di atas akan diabaikan dan langsung lanjut ke sini
                 
                 elLinkWa.href = `https://wa.me/${noHpWa}`;
                 elLinkWa.style.display = 'flex'; // Menggunakan flex agar icon dan text sejajar
