@@ -311,3 +311,64 @@ function downloadQR() {
         showToast("Tunggu sebentar, gambar QR belum selesai dibuat.", "error");
     }
 }
+
+// =================================================================
+// FITUR PENGATURAN AKUN (GANTI EMAIL & PASSWORD VIA SUPABASE)
+// =================================================================
+
+function bukaModalAkun() {
+    document.getElementById('edit-email').value = '';
+    document.getElementById('edit-pass').value = '';
+    document.getElementById('akun-modal').style.display = 'flex';
+}
+
+function tutupModalAkun() {
+    document.getElementById('akun-modal').style.display = 'none';
+}
+
+async function simpanAkun() {
+    const emailBaru = document.getElementById('edit-email').value.trim();
+    const passBaru = document.getElementById('edit-pass').value.trim();
+
+    if (!emailBaru && !passBaru) {
+        alert("Peringatan: Tidak ada data yang diisi untuk diubah."); 
+        return;
+    }
+
+    // Siapkan wadah (object) untuk data yang mau dikirim ke Supabase
+    const updates = {};
+    if (emailBaru) updates.email = emailBaru;
+    if (passBaru) {
+        if (passBaru.length < 6) {
+            alert("Error: Password minimal harus 6 karakter!");
+            return;
+        }
+        updates.password = passBaru;
+    }
+
+    const btnSimpan = document.getElementById('btn-simpan-akun');
+    btnSimpan.innerText = "Memperbarui...";
+    btnSimpan.disabled = true;
+
+    try {
+        // Mengeksekusi perubahan ke Supabase Authentication
+        const { error } = await supabaseClient.auth.updateUser(updates);
+        
+        if (error) throw error;
+
+        let pesanSukses = "Data akun berhasil diperbarui!";
+        if (emailBaru) {
+            pesanSukses += "\n\nPENTING: Karena Anda mengganti email, Supabase mengirimkan tautan konfirmasi ke email yang baru. Silakan cek kotak masuk (inbox) Anda untuk memverifikasinya.";
+        }
+        
+        alert(pesanSukses);
+        tutupModalAkun();
+
+    } catch (err) {
+        console.error(err);
+        alert("Gagal memperbarui akun: " + err.message);
+    } finally {
+        btnSimpan.innerText = "Update Akun";
+        btnSimpan.disabled = false;
+    }
+}
