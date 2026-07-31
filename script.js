@@ -53,10 +53,14 @@ async function ambilDataPengurus() {
         const elLinkWa = document.getElementById('link_wa');
         if (elLinkWa) {
             if (data.no_hp) {
-                let noHpWa = String(data.no_hp);
+                // Bersihkan karakter selain angka (seperti spasi, strip, atau tanda +)
+                let noHpWa = String(data.no_hp).replace(/\D/g, ''); 
+                
+                // Jika depannya 0, ganti jadi 62
                 if (noHpWa.startsWith('0')) {
                     noHpWa = '62' + noHpWa.substring(1);
                 }
+                
                 elLinkWa.href = `https://wa.me/${noHpWa}`;
                 elLinkWa.style.display = 'flex'; // Menggunakan flex agar icon dan text sejajar
             } else {

@@ -4,60 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Admin - Profil RT/RW</title>
+    <!-- Menghubungkan file CSS -->
+    <link rel="stylesheet" href="admin.css">
+    
+    <!-- Memuat Supabase (Wajib dimuat sebelum admin.js) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background-color: #f1f5f9; margin: 0; padding: 20px; color: #334155; }
-        
-        .container { max-width: 1000px; margin: 0 auto; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        input, textarea, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-family: inherit; }
-        textarea { resize: vertical; }
-        input[readonly] { background-color: #e2e8f0; cursor: not-allowed; } /* Style untuk input ID saat mode Edit (dikunci) */
-        
-        button { background-color: #3b82f6; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #2563eb; }
-        .btn-danger { background-color: #ef4444; }
-        .btn-danger:hover { background-color: #dc2626; }
-        .btn-success { background-color: #10b981; }
-        .btn-success:hover { background-color: #059669; }
-        .btn-small { width: auto; padding: 8px 12px; font-size: 12px; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f8fafc; font-weight: 600; }
-        
-        #edit-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 10; padding: 20px; }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
-        
-        #dashboard-section { display: none; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; }
-        .action-buttons { display: flex; gap: 10px; }
-    </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="login-section" class="card" style="max-width: 400px; margin: 100px auto;">
+    <div id="login-section" class="card login-card">
         <h2 style="text-align: center; margin-bottom: 20px;">Login Admin</h2>
-        <div id="login-error" style="color: red; font-size: 12px; margin-bottom: 10px; display: none;"></div>
+        <div id="login-error" class="error-text"></div>
         <input type="email" id="email" placeholder="Email Admin" required>
         <input type="password" id="password" placeholder="Passphrase" required>
-        <button onclick="login()">Masuk</button>
+        <button id="btn-login" onclick="login()">Masuk</button>
     </div>
 
     <div id="dashboard-section">
         <div class="card header-flex">
             <h2>Panel Pengelolaan Data RT/RW</h2>
             <div class="action-buttons">
-                <!-- Tombol Tambah Data -->
                 <button class="btn-success btn-small" onclick="bukaModalTambah()">+ Tambah Data</button>
                 <button class="btn-danger btn-small" onclick="logout()">Keluar</button>
             </div>
         </div>
         
-        <div class="card" style="overflow-x: auto;">
+        <div class="card table-container">
             <table>
                 <thead>
                     <tr>
@@ -79,197 +52,38 @@
     <div class="modal-content">
         <h3 id="modal-title">Form Data Pengurus</h3>
         
-        <!-- KOLOM ID DITAMBAHKAN DI SINI -->
-        <label>ID Pengurus (Contoh: RT1-RW2)</label>
-        <input type="text" id="edit-id" placeholder="Ketik ID unik untuk data ini">
+        <label>ID Pengurus (Tanpa Spasi, contoh: RT1-RW2)</label>
+        <input type="text" id="edit-id" placeholder="Hanya huruf, angka, dan strip (-)">
         
         <label>Nama</label>
-        <input type="text" id="edit-nama" placeholder="Nama Lengkap">
+        <input type="text" id="edit-nama">
         
         <label>Jabatan</label>
-        <input type="text" id="edit-jabatan" placeholder="Contoh: Ketua RT 1 / RW 2">
+        <input type="text" id="edit-jabatan">
         
         <label>Masa Jabatan</label>
-        <input type="text" id="edit-masa" placeholder="Contoh: April 2026 - April 2031">
+        <input type="text" id="edit-masa">
         
         <label>Nomor HP / WhatsApp</label>
-        <input type="text" id="edit-nohp" placeholder="Contoh: 08123456789">
+        <input type="text" id="edit-nohp">
         
         <label>Deskripsi Tugas</label>
-        <textarea id="edit-deskripsi" rows="3" placeholder="Tuliskan detail tugas di sini..."></textarea>
+        <textarea id="edit-deskripsi" rows="3"></textarea>
         
-        <label>URL Foto (Dari Supabase Storage)</label>
-        <input type="text" id="edit-foto" placeholder="Link gambar publik">
+        <label>Upload Foto Profil (Opsi)</label>
+        <input type="file" id="edit-foto" accept="image/*">
         
-        <div style="display: flex; gap: 10px;">
+        <div class="modal-actions">
             <button id="btn-simpan" onclick="simpanData()">Simpan</button>
             <button class="btn-danger" onclick="tutupModal()">Batal</button>
         </div>
     </div>
 </div>
 
-<script>
-    // Konfigurasi Supabase
-    const SUPABASE_URL = 'https://zpskuqsmnsrolbnvmrvr.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpwc2t1cXNtbnNyb2xibnZtcnZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNDg4MTAsImV4cCI6MjEwMDcyNDgxMH0.e6ic19bbKP0BorQEiIzjKe3xtRfvXM0rRqEdY25zKcg';
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<!-- Elemen Toast Notification -->
+<div id="toast">Notifikasi</div>
 
-    let daftarPengurus = [];
-    let modeForm = 'edit'; // Penanda mode: 'tambah' atau 'edit'
-
-    window.onload = async () => {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) tampilkanDashboard();
-    };
-
-    async function login() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const errorDiv = document.getElementById('login-error');
-
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) {
-            errorDiv.innerText = "Login gagal. Periksa kembali kredensial Anda.";
-            errorDiv.style.display = 'block';
-        } else {
-            tampilkanDashboard();
-        }
-    }
-
-    async function logout() {
-        await supabaseClient.auth.signOut();
-        document.getElementById('dashboard-section').style.display = 'none';
-        document.getElementById('login-section').style.display = 'block';
-    }
-
-    function tampilkanDashboard() {
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('dashboard-section').style.display = 'block';
-        muatDataPengurus();
-    }
-
-    async function muatDataPengurus() {
-        const { data, error } = await supabaseClient
-            .from('pengurus')
-            .select('*')
-            .order('id', { ascending: true });
-
-        if (error) {
-            alert("Gagal memuat data dari Supabase!");
-            return;
-        }
-
-        daftarPengurus = data;
-        const tbody = document.getElementById('table-body');
-        tbody.innerHTML = '';
-        
-        data.forEach(p => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${p.id || 'Tanpa ID'}</strong></td>
-                <td>${p.nama || '-'}</td>
-                <td>${p.jabatan || '-'}</td>
-                <td>
-                    <button class="btn-small" onclick="bukaModalEdit('${p.id}')">Edit</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // Fungsi saat tombol + Tambah Data diklik
-    function bukaModalTambah() {
-        modeForm = 'tambah';
-        document.getElementById('modal-title').innerText = 'Tambah Data Pengurus Baru';
-        
-        // Buka kunci input ID dan kosongkan form
-        const inputId = document.getElementById('edit-id');
-        inputId.value = '';
-        inputId.readOnly = false; // Memungkinkan ID diketik
-        
-        document.getElementById('edit-nama').value = '';
-        document.getElementById('edit-jabatan').value = '';
-        document.getElementById('edit-masa').value = '';
-        document.getElementById('edit-nohp').value = '';
-        document.getElementById('edit-deskripsi').value = '';
-        document.getElementById('edit-foto').value = '';
-        
-        document.getElementById('edit-modal').style.display = 'flex';
-    }
-
-    // Fungsi saat tombol Edit diklik
-    function bukaModalEdit(id) {
-        modeForm = 'edit';
-        document.getElementById('modal-title').innerText = 'Edit Data Pengurus';
-        const p = daftarPengurus.find(item => item.id == id);
-        if (!p) return;
-
-        // Kunci input ID agar tidak bisa diubah (karena sebagai Primary Key)
-        const inputId = document.getElementById('edit-id');
-        inputId.value = p.id || '';
-        inputId.readOnly = true;
-
-        document.getElementById('edit-nama').value = p.nama || '';
-        document.getElementById('edit-jabatan').value = p.jabatan || '';
-        document.getElementById('edit-masa').value = p.masa_jabatan || '';
-        document.getElementById('edit-nohp').value = p.no_hp || '';
-        document.getElementById('edit-deskripsi').value = p.deskripsi_tugas || '';
-        document.getElementById('edit-foto').value = p.foto_url || '';
-        
-        document.getElementById('edit-modal').style.display = 'flex';
-    }
-
-    function tutupModal() {
-        document.getElementById('edit-modal').style.display = 'none';
-    }
-
-    // Fungsi untuk menyimpan data (baik Tambah maupun Edit)
-    async function simpanData() {
-        const idInput = document.getElementById('edit-id').value.trim();
-        
-        // Validasi: Pastikan ID tidak kosong
-        if (!idInput) {
-            alert("ID Pengurus WAJIB diisi! (Misal: RT1-RW2)");
-            document.getElementById('edit-id').focus();
-            return;
-        }
-
-        const btnSimpan = document.getElementById('btn-simpan');
-        btnSimpan.innerText = "Menyimpan...";
-        btnSimpan.disabled = true;
-        
-        const dataPayload = {
-            nama: document.getElementById('edit-nama').value,
-            jabatan: document.getElementById('edit-jabatan').value,
-            masa_jabatan: document.getElementById('edit-masa').value,
-            no_hp: document.getElementById('edit-nohp').value,
-            deskripsi_tugas: document.getElementById('edit-deskripsi').value,
-            foto_url: document.getElementById('edit-foto').value
-        };
-
-        let hasil;
-        
-        if (modeForm === 'tambah') {
-            // Sertakan ID untuk data baru
-            dataPayload.id = idInput; 
-            hasil = await supabaseClient.from('pengurus').insert([dataPayload]);
-        } else {
-            // Update data lama berdasarkan ID
-            hasil = await supabaseClient.from('pengurus').update(dataPayload).eq('id', idInput);
-        }
-
-        if (hasil.error) {
-            alert("Gagal menyimpan data! Pastikan ID yang dimasukkan unik (belum pernah dipakai) dan tabel Anda sudah mengatur 'id' sebagai Primary Key.");
-            console.error(hasil.error);
-        } else {
-            alert("Data berhasil disimpan!");
-            tutupModal();
-            muatDataPengurus();
-        }
-        
-        btnSimpan.innerText = "Simpan";
-        btnSimpan.disabled = false;
-    }
-</script>
+<!-- Menghubungkan file JavaScript -->
+<script src="admin.js"></script>
 </body>
 </html>
